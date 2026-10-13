@@ -69,15 +69,33 @@
     return { notebooks: [nb], activeNotebookId: nb.id };
   }
 
+  // In the desktop app data lives in a file (via electron/preload.js); in a browser it uses localStorage.
+  const desktop = window.notebookDesktop || null;
+
   function loadState() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      const raw = desktop ? desktop.load() : localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const data = JSON.parse(raw);
-        if (isValidState(data)) return data;
+        if (isValidState(data)) return normalizeState(data);
       }
     } catch (e) { /* fall through to default */ }
     return defaultState();
+  }
+
+  // Page levels must form a valid tree: first page is top level, each page at most one level below the one above.
+  function normalizeLevels(s) {
+    let prev = -1;
+    for (const p of s.pages) {
+      p.level = Math.max(0, Math.min(Number.isInteger(p.level) ? p.level : 0, prev + 1));
+      prev = p.level;
+    }
+  }
+
+  function normalizeState(data) {
+    data.notebooks.forEach((nb) => nb.sections.forEach(normalizeLevels));
+    if (!data.notebooks.some((n) => n.id === data.activeNotebookId)) data.activeNotebookId = data.notebooks[0].id;
+    return data;
   }
 
   function isValidState(data) {
@@ -99,11 +117,18 @@
   function saveNow() {
     clearTimeout(saveTimer);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const json = JSON.stringify(state);
+      if (desktop) {
+        const res = desktop.save(json);
+        if (!res || !res.ok) throw new Error(res && res.error);
+      } else {
+        localStorage.setItem(STORAGE_KEY, json);
+      }
+      saveWarned = false;
     } catch (e) {
       if (!saveWarned) {
         saveWarned = true;
-        alert('Could not save: browser storage is full or unavailable. Export your data to keep it.');
+        alert('Could not save your notes' + (e && e.message ? ': ' + e.message : '.') + ' Export your data to keep it.');
       }
     }
   }
@@ -734,24 +759,101 @@
   el.fontColor.addEventListener('input', () => exec('foreColor', el.fontColor.value));
 
   el.imageInput.addEventListener('change', () => {
-    const file = el.imageInput.files[0];
+    const files = [...el.imageInput.files];
     el.imageInput.value = '';
-    if (file) readImage(file);
+    insertImages(files);
   });
 
-  function readImage(file) {
+  const IMAGE_MAX_SIDE = 1600;
+  const IMAGE_KEEP_BYTES = 300 * 1024;
+
+  const readAsDataUrl = (blob) => new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => insertHtml(`<img src="${reader.result}" alt="">`);
-    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(blob);
+  });
+
+  // Large photos are scaled down and re-encoded so they fit in storage (browser storage is ~5 MB in total).
+  async function imageToDataUrl(file) {
+    const original = await readAsDataUrl(file);
+    if (file.type === 'image/gif' || file.type === 'image/svg+xml') return original;
+    const img = new Image();
+    img.src = original;
+    await img.decode();
+    const scale = Math.min(1, IMAGE_MAX_SIDE / Math.max(img.naturalWidth, img.naturalHeight));
+    if (scale === 1 && file.size <= IMAGE_KEEP_BYTES) return original;
+    const c = document.createElement('canvas');
+    c.width = Math.round(img.naturalWidth * scale);
+    c.height = Math.round(img.naturalHeight * scale);
+    c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+    const out = c.toDataURL('image/webp', 0.85);
+    return out.startsWith('data:image/webp') && out.length < original.length ? out : original;
   }
+
+  // Inserts into the note being edited; with no note selected, starts a new one (at x/y if given).
+  async function insertImages(files, x, y) {
+    files = [...files].filter((f) => f && f.type.startsWith('image/'));
+    if (!files.length) return;
+    if (!page()) { alert('Create a page first.'); return; }
+    const range = savedRange;
+    let html = '';
+    for (const f of files) {
+      try {
+        html += `<p><img src="${await imageToDataUrl(f)}" alt=""></p>`;
+      } catch (e) {
+        alert(`Could not read image "${f.name || 'pasted image'}".`);
+      }
+    }
+    if (!html) return;
+    savedRange = range;
+    if (!activeBody()) {
+      if (x === undefined) {
+        const bottom = Math.max(0, ...[...el.canvas.querySelectorAll('.note')].map((n) => n.offsetTop + n.offsetHeight));
+        x = 40; y = bottom + 20;
+      }
+      createNote(x, y);
+      const body = el.canvas.lastElementChild.querySelector('.body');
+      body.innerHTML = '';
+      body.focus();
+    }
+    insertHtml(html + '<p><br></p>');
+  }
+
+  // Dropping files anywhere else must not navigate the app away.
+  ['dragover', 'drop'].forEach((t) => window.addEventListener(t, (e) => {
+    if (e.dataTransfer && [...e.dataTransfer.types].includes('Files')) e.preventDefault();
+  }));
+
+  el.canvas.addEventListener('drop', (e) => {
+    const files = [...e.dataTransfer.files].filter((f) => f.type.startsWith('image/'));
+    if (!files.length) return;
+    e.preventDefault();
+    const body = e.target.closest('.body');
+    if (body) {
+      const r = document.caretRangeFromPoint && document.caretRangeFromPoint(e.clientX, e.clientY);
+      body.focus();
+      if (r && body.contains(r.startContainer)) {
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(r);
+      }
+      insertImages(files);
+    } else {
+      const rect = el.canvas.getBoundingClientRect();
+      document.activeElement && document.activeElement.blur && document.activeElement.blur();
+      savedRange = null;
+      insertImages(files, e.clientX - rect.left, e.clientY - rect.top);
+    }
+  });
 
   el.canvas.addEventListener('paste', (e) => {
     if (!e.target.closest('.body')) return;
     const items = [...(e.clipboardData.items || [])];
-    const img = items.find((i) => i.kind === 'file' && i.type.startsWith('image/'));
-    if (img) {
+    const images = items.filter((i) => i.kind === 'file' && i.type.startsWith('image/')).map((i) => i.getAsFile());
+    if (images.length) {
       e.preventDefault();
-      readImage(img.getAsFile());
+      insertImages(images);
       return;
     }
     const html = e.clipboardData.getData('text/html');
