@@ -1,0 +1,126 @@
+{
+  "activeNotebookId": "nb-work",
+  "notebooks": [
+    {
+      "id": "nb-work",
+      "name": "Work",
+      "lastSectionId": "sec-projects",
+      "sections": [
+        {
+          "id": "sec-projects",
+          "name": "Projects",
+          "color": "#2b88d8",
+          "lastPageId": "pg-website",
+          "pages": [
+            {
+              "id": "pg-website",
+              "title": "Website Redesign",
+              "level": 0,
+              "created": "2026-10-01T09:00:00.000Z",
+              "updated": "2026-10-10T16:30:00.000Z",
+              "notes": [
+                {
+                  "id": "n-website-1",
+                  "x": 40, "y": 20, "w": 520,
+                  "html": "<h2>Goals</h2><ul><li>Faster page loads</li><li>New <b>pricing</b> page</li><li>Mobile-friendly navigation</li></ul>"
+                },
+                {
+                  "id": "n-website-2",
+                  "x": 600, "y": 20, "w": 360,
+                  "html": "<h2>Tasks</h2><p><span class=\"todo\" contenteditable=\"false\" data-checked=\"true\"></span>Agree scope</p><p><span class=\"todo\" contenteditable=\"false\" data-checked=\"false\"></span>Wireframes</p><p><span class=\"todo\" contenteditable=\"false\" data-checked=\"false\"></span>Launch</p>"
+                }
+              ]
+            },
+            {
+              "id": "pg-website-meetings",
+              "title": "Meeting Notes",
+              "level": 1,
+              "created": "2026-10-03T10:00:00.000Z",
+              "updated": "2026-10-03T11:00:00.000Z",
+              "notes": [
+                {
+                  "id": "n-meet-1",
+                  "x": 40, "y": 20, "w": 560,
+                  "html": "<h2>3 October kickoff</h2><table><tbody><tr><td><b>Owner</b></td><td><b>Action</b></td></tr><tr><td>Sam</td><td>Draft sitemap</td></tr><tr><td>Priya</td><td>Collect analytics</td></tr></tbody></table>"
+                }
+              ]
+            },
+            {
+              "id": "pg-website-meetings-followup",
+              "title": "Follow-up Questions",
+              "level": 2,
+              "created": "2026-10-04T08:00:00.000Z",
+              "updated": "2026-10-04T08:00:00.000Z",
+              "notes": [
+                {
+                  "id": "n-followup-1",
+                  "x": 40, "y": 20, "w": 480,
+                  "html": "<p>Which analytics tool do we keep? See <a href=\"https://example.com\">vendor comparison</a>.</p>"
+                }
+              ]
+            },
+            {
+              "id": "pg-budget",
+              "title": "Q4 Budget",
+              "level": 0,
+              "created": "2026-10-05T12:00:00.000Z",
+              "updated": "2026-10-05T12:00:00.000Z",
+              "notes": [
+                {
+                  "id": "n-budget-1",
+                  "x": 40, "y": 20, "w": 420,
+                  "html": "<p>Total: <span style=\"background-color: rgb(255, 241, 118);\">$45,000</span></p><p>Design 40%, development 50%, other 10%.</p>"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "sec-ideas",
+          "name": "Ideas",
+          "color": "#0b8a00",
+          "pages": [
+            {
+              "id": "pg-ideas",
+              "title": "Product Ideas",
+              "notes": [
+                { "html": "<p>Minimal page: only ids, title and html. Missing fields get defaults on import.</p>" }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "nb-personal",
+      "name": "Personal",
+      "sections": [
+        {
+          "id": "sec-travel",
+          "name": "Travel",
+          "color": "#d83b01",
+          "pages": [
+            {
+              "id": "pg-japan",
+              "title": "Japan Trip",
+              "level": 0,
+              "notes": [
+                {
+                  "id": "n-japan-1",
+                  "x": 40, "y": 20, "w": 480,
+                  "html": "<h2>Packing</h2><ol><li>Passport</li><li>Rail pass</li><li>Adapter</li></ol>"
+                }
+              ]
+            },
+            {
+              "id": "pg-japan-tokyo",
+              "title": "Tokyo",
+              "level": 1,
+              "notes": []
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

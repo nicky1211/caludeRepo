@@ -102,8 +102,30 @@
     }
   }
 
+  // Fills in optional fields so hand-written import files only need ids and the nesting arrays.
   function normalizeState(data) {
-    data.notebooks.forEach((nb) => nb.sections.forEach(normalizeLevels));
+    const t = now();
+    const num = (v, d) => (Number.isFinite(v) ? v : d);
+    data.notebooks.forEach((nb) => {
+      nb.name = typeof nb.name === 'string' && nb.name.trim() ? nb.name : 'Untitled Notebook';
+      nb.sections.forEach((s, si) => {
+        s.name = typeof s.name === 'string' && s.name.trim() ? s.name : 'Untitled Section';
+        s.color = typeof s.color === 'string' ? s.color : SECTION_COLORS[si % SECTION_COLORS.length];
+        s.pages.forEach((p) => {
+          p.title = typeof p.title === 'string' ? p.title : '';
+          p.created = isNaN(Date.parse(p.created)) ? t : p.created;
+          p.updated = isNaN(Date.parse(p.updated)) ? p.created : p.updated;
+          p.notes.forEach((n, ni) => {
+            n.id = typeof n.id === 'string' ? n.id : uid();
+            n.x = num(n.x, 40);
+            n.y = num(n.y, 20 + ni * 200);
+            n.w = num(n.w, 500);
+            n.html = typeof n.html === 'string' ? n.html : '';
+          });
+        });
+        normalizeLevels(s);
+      });
+    });
     if (!data.notebooks.some((n) => n.id === data.activeNotebookId)) data.activeNotebookId = data.notebooks[0].id;
     return data;
   }
@@ -1313,8 +1335,7 @@
       try { data = JSON.parse(reader.result); } catch (e) { alert('That file is not valid JSON.'); return; }
       if (!isValidState(data) || !data.notebooks.length) { alert('That file is not a notebook export.'); return; }
       if (!confirm('Replace all current notebooks with the imported data?')) return;
-      state = data;
-      if (!state.notebooks.some((n) => n.id === state.activeNotebookId)) state.activeNotebookId = state.notebooks[0].id;
+      state = normalizeState(data);
       renderedPageId = null;
       saveNow();
       render();
