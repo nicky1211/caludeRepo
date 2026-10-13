@@ -8,96 +8,154 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <header class="topbar">
-    <div class="brand">Notebook</div>
-    <div class="notebook-picker">
-      <select id="notebookSelect" title="Switch notebook"></select>
-      <button id="addNotebookBtn" class="icon-btn" title="New notebook">+</button>
-      <button id="notebookMenuBtn" class="icon-btn" title="Notebook options">...</button>
-    </div>
-    <input id="searchInput" type="search" placeholder="Search all notebooks (Ctrl+E)">
-    <div class="topbar-actions">
-      <button id="exportBtn" title="Export all data as JSON">Export</button>
-      <label class="file-btn" title="Import data from JSON">Import<input id="importInput" type="file" accept="application/json" hidden></label>
-    </div>
-  </header>
+  <!-- Icon set drawn in the style of SF Symbols (1.5pt strokes, rounded caps) -->
+  <svg class="sprite" aria-hidden="true">
+    <symbol id="i-sidebar" viewBox="0 0 20 20"><rect x="2.5" y="3.75" width="15" height="12.5" rx="2.5"/><path d="M7.75 3.75v12.5"/><path d="M4.5 6.75h1.25M4.5 9h1.25M4.5 11.25h1.25" stroke-width="1.25"/></symbol>
+    <symbol id="i-compose" viewBox="0 0 20 20"><path d="M9.5 4H5.75a2 2 0 0 0-2 2v8.25a2 2 0 0 0 2 2H14a2 2 0 0 0 2-2V10.5"/><path d="M14.6 3.4a1.4 1.4 0 0 1 2 2L10.4 11.6 8 12.25l.65-2.4z"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 20 20"><path d="M10 4.5v11M4.5 10h11"/></symbol>
+    <symbol id="i-search" viewBox="0 0 20 20"><circle cx="8.75" cy="8.75" r="5"/><path d="M12.5 12.5l4 4"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 20 20"><path d="M6 8l4 4 4-4"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 20 20"><path d="M8 6l4 4-4 4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 20 20"><circle cx="5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="10" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="15" cy="10" r="1.1" fill="currentColor" stroke="none"/></symbol>
+    <symbol id="i-list-bullet" viewBox="0 0 20 20"><circle cx="4.5" cy="5.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="10" r="1.1" fill="currentColor" stroke="none"/><circle cx="4.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><path d="M8 5.5h8.5M8 10h8.5M8 14.5h8.5"/></symbol>
+    <symbol id="i-list-number" viewBox="0 0 20 20"><path d="M8 5.5h8.5M8 10h8.5M8 14.5h8.5"/><path d="M3.5 4.25l1-.5v3.5" stroke-width="1.2"/><path d="M3.25 9.1c.4-.6 1.9-.6 1.9.35 0 .75-1.9 1.55-1.9 2.3h1.95" stroke-width="1.2"/><path d="M3.3 13.25h1.8l-.95 1.05c.75 0 1.05.35 1.05.8 0 .95-1.45 1.05-1.95.5" stroke-width="1.2"/></symbol>
+    <symbol id="i-checklist" viewBox="0 0 20 20"><rect x="2.75" y="3.25" width="5" height="5" rx="1.25"/><path d="M3.9 5.8l1 1 1.9-2.1" stroke-width="1.25"/><rect x="2.75" y="11.75" width="5" height="5" rx="1.25"/><path d="M10.5 5.75h6M10.5 14.25h6"/></symbol>
+    <symbol id="i-highlight" viewBox="0 0 20 20"><path d="M12.5 3.5l3.5 3.5-6.25 6.25H6.25V9.75z"/><path d="M6.25 13.25L4.5 15"/><rect x="3" y="16" width="14" height="1.6" rx=".8" fill="#ffd60a" stroke="none"/></symbol>
+    <symbol id="i-textcolor" viewBox="0 0 20 20"><path d="M6 13.5L10 3.5l4 10M7.4 10h5.2"/></symbol>
+    <symbol id="i-link" viewBox="0 0 20 20"><path d="M8.6 11.4a3 3 0 0 0 4.25 0l2.4-2.4a3 3 0 0 0-4.25-4.25l-1 1"/><path d="M11.4 8.6a3 3 0 0 0-4.25 0l-2.4 2.4a3 3 0 0 0 4.25 4.25l1-1"/></symbol>
+    <symbol id="i-table" viewBox="0 0 20 20"><rect x="2.75" y="3.75" width="14.5" height="12.5" rx="2.25"/><path d="M2.75 8.25h14.5M2.75 12.25h14.5M8 8.25v8"/></symbol>
+    <symbol id="i-photo" viewBox="0 0 20 20"><rect x="2.75" y="4" width="14.5" height="12" rx="2.25"/><circle cx="7.25" cy="8.25" r="1.25"/><path d="M3 14l4-3.75 3 2.75 2.25-2 4.5 4"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 20 20"><path d="M5 4.5h9M9.5 4.5l-2.5 11"/><path d="M12 11.5l4 4M16 11.5l-4 4"/></symbol>
+    <symbol id="i-textformat" viewBox="0 0 20 20"><path d="M2.5 15L6.25 5l3.75 10M3.9 11.5h4.7"/><path d="M15.25 9.25V15M15.25 10.9c-.5-1.2-3.75-1.4-3.75 1.2 0 2.45 3.25 2.3 3.75 1.1"/></symbol>
+    <symbol id="i-notebook" viewBox="0 0 20 20"><rect x="4" y="2.75" width="12" height="14.5" rx="2"/><path d="M7 2.75v14.5M2.75 6h2.5M2.75 10h2.5M2.75 14h2.5"/></symbol>
+  </svg>
 
-  <div class="toolbar" id="toolbar">
-    <button data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
-    <button data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
-    <button data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
-    <button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
-    <span class="sep"></span>
-    <button data-block="H1" title="Heading 1">H1</button>
-    <button data-block="H2" title="Heading 2">H2</button>
-    <button data-block="P" title="Normal text">P</button>
-    <span class="sep"></span>
-    <button data-cmd="insertUnorderedList" title="Bullet list">&bull; List</button>
-    <button data-cmd="insertOrderedList" title="Numbered list">1. List</button>
-    <button data-action="todo" title="To-do checkbox (Ctrl+1)">&#9744; To Do</button>
-    <span class="sep"></span>
-    <button data-action="highlight" title="Highlight"><span class="hl-swatch">ab</span></button>
-    <label class="color-btn" title="Font color">A<input type="color" id="fontColor" value="#c0392b"></label>
-    <button data-action="link" title="Insert link">Link</button>
-    <button data-action="table" title="Insert table">Table</button>
-    <label class="file-btn" title="Insert image">Image<input id="imageInput" type="file" accept="image/*" multiple hidden></label>
-    <button data-cmd="removeFormat" title="Clear formatting">Clear</button>
-  </div>
+  <div class="app" id="app">
+    <button id="toggleSidebarBtn" class="tb-btn sidebar-toggle" aria-label="Hide Sidebar" aria-controls="sidebar" aria-expanded="true" data-tip="Hide Sidebar" data-keys="ctrl+cmd+s">
+      <svg class="icon"><use href="#i-sidebar"/></svg>
+    </button>
 
-  <main class="layout">
-    <nav class="sections-pane">
-      <div class="pane-header">
-        <span>Sections</span>
-        <button id="addSectionBtn" class="icon-btn" title="New section">+</button>
+    <nav class="sidebar" id="sidebar" aria-label="Notebook">
+      <div class="sidebar-top drag"></div>
+      <div class="sidebar-notebook">
+        <button id="notebookBtn" class="popup-btn" aria-haspopup="menu" aria-label="Notebook" data-tip="Switch, add, import or export notebooks">
+          <svg class="icon"><use href="#i-notebook"/></svg>
+          <span id="notebookName" class="popup-label">Notebook</span>
+          <svg class="icon chevron"><use href="#i-chevron-down"/></svg>
+        </button>
       </div>
-      <ul id="sectionList" class="list"></ul>
-    </nav>
-
-    <nav class="pages-pane">
-      <div class="pane-header">
-        <span id="pagesHeader">Pages</span>
-        <button id="addPageBtn" class="icon-btn" title="New page">+</button>
+      <div class="sidebar-heading" id="sectionsHeading">Sections</div>
+      <ul id="sectionList" class="source-list" role="listbox" aria-labelledby="sectionsHeading"></ul>
+      <div class="sidebar-footer">
+        <button id="addSectionBtn" class="footer-btn" data-tip="New Section" data-keys="shift+cmd+n">
+          <svg class="icon"><use href="#i-plus"/></svg><span>New Section</span>
+        </button>
       </div>
-      <ul id="pageList" class="list"></ul>
-      <ul id="searchResults" class="list hidden"></ul>
     </nav>
+    <div class="splitter" id="sidebarSplitter" role="separator" aria-orientation="vertical" aria-label="Resize sidebar" tabindex="-1"></div>
 
-    <section class="page-pane" id="pagePane">
+    <header class="list-toolbar drag" id="listToolbar">
+      <div class="list-toolbar-titles">
+        <h1 id="pagesHeader" class="list-title">Pages</h1>
+        <div id="pagesCount" class="list-subtitle"></div>
+      </div>
+      <button id="addPageBtn" class="tb-btn" aria-label="New Page" data-tip="New Page" data-keys="cmd+n">
+        <svg class="icon"><use href="#i-compose"/></svg>
+      </button>
+    </header>
+    <nav class="pages-pane" id="pagesPane" aria-label="Pages">
+      <ul id="pageList" class="page-list" role="tree" aria-labelledby="pagesHeader"></ul>
+      <ul id="searchResults" class="page-list hidden" role="listbox" aria-label="Search results"></ul>
+    </nav>
+    <div class="splitter" id="pagesSplitter" role="separator" aria-orientation="vertical" aria-label="Resize page list" tabindex="-1"></div>
+
+    <header class="main-toolbar drag" id="mainToolbar">
+      <div class="format-bar" id="toolbar" role="toolbar" aria-label="Formatting">
+        <div class="segmented" role="group" aria-label="Text style">
+          <button data-command="bold" aria-label="Bold" data-tip="Bold" data-keys="cmd+b"><b>B</b></button>
+          <button data-command="italic" aria-label="Italic" data-tip="Italic" data-keys="cmd+i"><i class="serif">I</i></button>
+          <button data-command="underline" aria-label="Underline" data-tip="Underline" data-keys="cmd+u"><u>U</u></button>
+          <button data-command="strike" aria-label="Strikethrough" data-tip="Strikethrough" data-keys="shift+cmd+x"><s>S</s></button>
+        </div>
+        <button class="tb-btn" id="headingBtn" data-command="paragraphMenu" aria-haspopup="menu" aria-label="Paragraph style" data-tip="Paragraph Style">
+          <svg class="icon"><use href="#i-textformat"/></svg>
+        </button>
+        <div class="segmented lists" role="group" aria-label="Lists">
+          <button data-command="bullets" aria-label="Bulleted list" data-tip="Bulleted List" data-keys="shift+cmd+7"><svg class="icon"><use href="#i-list-bullet"/></svg></button>
+          <button data-command="numbers" aria-label="Numbered list" data-tip="Numbered List" data-keys="shift+cmd+8"><svg class="icon"><use href="#i-list-number"/></svg></button>
+          <button data-command="todo" aria-label="To-do checkbox" data-tip="To-Do Checkbox" data-keys="cmd+1"><svg class="icon"><use href="#i-checklist"/></svg></button>
+        </div>
+        <div class="segmented optional" role="group" aria-label="Insert">
+          <button data-command="highlight" aria-label="Highlight" data-tip="Highlight" data-keys="shift+cmd+h"><svg class="icon"><use href="#i-highlight"/></svg></button>
+          <button data-command="fontColor" aria-label="Text colour" data-tip="Text Colour"><svg class="icon"><use href="#i-textcolor"/></svg><span class="color-bar" id="colorBar"></span></button>
+          <button data-command="link" aria-label="Add link" data-tip="Add Link" data-keys="cmd+k"><svg class="icon"><use href="#i-link"/></svg></button>
+          <button data-command="table" aria-label="Insert table" data-tip="Insert Table"><svg class="icon"><use href="#i-table"/></svg></button>
+          <button data-command="image" aria-label="Insert image" data-tip="Insert Image" data-keys="shift+cmd+i"><svg class="icon"><use href="#i-photo"/></svg></button>
+          <button data-command="clear" aria-label="Clear formatting" data-tip="Clear Formatting"><svg class="icon"><use href="#i-clear"/></svg></button>
+        </div>
+        <button class="tb-btn overflow" id="overflowBtn" data-command="overflowMenu" aria-haspopup="menu" aria-label="More formatting" data-tip="More">
+          <svg class="icon"><use href="#i-more"/></svg>
+        </button>
+      </div>
+      <div class="search-field">
+        <svg class="icon"><use href="#i-search"/></svg>
+        <input id="searchInput" type="search" placeholder="Search" aria-label="Search all notebooks" aria-controls="searchResults" autocomplete="off" spellcheck="false">
+      </div>
+    </header>
+    <main class="page-pane" id="pagePane">
       <div class="page-head">
-        <input id="pageTitle" class="page-title" placeholder="Untitled Page">
+        <input id="pageTitle" class="page-title" placeholder="Untitled Page" aria-label="Page title" autocomplete="off">
         <div id="pageMeta" class="page-meta"></div>
       </div>
-      <div id="canvas" class="canvas" title="Click anywhere to add a note"></div>
-      <div id="emptyState" class="empty-state hidden">Create a section and a page to start taking notes.</div>
-    </section>
-  </main>
+      <div id="canvas" class="canvas" role="region" aria-label="Page content. Click anywhere to add a note."></div>
+      <div id="emptyState" class="empty-state hidden">No Page Selected</div>
+    </main>
+  </div>
 
-  <ul id="contextMenu" class="context-menu hidden"></ul>
+  <input id="importInput" type="file" accept="application/json,.json" hidden>
+  <input id="imageInput" type="file" accept="image/*" multiple hidden>
+  <input id="fontColor" type="color" value="#d70015" class="offscreen" tabindex="-1" aria-hidden="true">
 
-  <dialog id="placeDialog" class="dialog">
+  <ul id="contextMenu" class="menu hidden" role="menu"></ul>
+  <div id="tooltip" class="tooltip" role="tooltip" aria-hidden="true"></div>
+  <div id="liveRegion" class="offscreen" aria-live="polite"></div>
+
+  <dialog id="placeDialog" class="sheet" aria-labelledby="placeHeading">
     <form method="dialog">
-      <h3 id="placeHeading">New page</h3>
-      <label id="placeNameRow">Title
+      <h2 id="placeHeading">New Page</h2>
+      <label id="placeNameRow" class="field">Title
         <input id="placeName" placeholder="Untitled Page" autocomplete="off">
       </label>
-      <label>Place under
-        <input id="placeFilter" type="search" placeholder="Filter pages..." autocomplete="off">
+      <label class="field">Place under
+        <input id="placeFilter" type="search" placeholder="Filter pages" autocomplete="off" aria-controls="placeList">
       </label>
-      <ul id="placeList" class="place-list" role="listbox"></ul>
-      <div class="dialog-actions">
-        <button value="cancel" formnovalidate>Cancel</button>
-        <button id="placeOk" value="ok" class="primary">Create</button>
+      <ul id="placeList" class="place-list" role="listbox" aria-label="Parent page"></ul>
+      <div class="sheet-actions">
+        <button value="cancel" class="push" formnovalidate>Cancel</button>
+        <button id="placeOk" value="ok" class="push default">Create</button>
       </div>
     </form>
   </dialog>
 
-  <dialog id="textDialog" class="dialog">
+  <dialog id="textDialog" class="sheet" aria-labelledby="textHeading">
     <form method="dialog">
-      <h3 id="textHeading"></h3>
-      <input id="textValue" autocomplete="off">
-      <div class="dialog-actions">
-        <button value="cancel" formnovalidate>Cancel</button>
-        <button value="ok" class="primary">OK</button>
+      <h2 id="textHeading"></h2>
+      <input id="textValue" class="text-input" autocomplete="off" aria-labelledby="textHeading">
+      <div class="sheet-actions">
+        <button value="cancel" class="push" formnovalidate>Cancel</button>
+        <button value="ok" class="push default">OK</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="confirmDialog" class="sheet alert" aria-labelledby="confirmHeading" aria-describedby="confirmDetail">
+    <form method="dialog">
+      <div class="alert-icon" aria-hidden="true"></div>
+      <h2 id="confirmHeading"></h2>
+      <p id="confirmDetail"></p>
+      <div class="sheet-actions">
+        <button value="cancel" id="confirmCancel" class="push" formnovalidate>Cancel</button>
+        <button value="ok" id="confirmOk" class="push default">OK</button>
       </div>
     </form>
   </dialog>

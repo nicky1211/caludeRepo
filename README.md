@@ -47,8 +47,18 @@ Open `index.html` in a browser, or serve the folder with `python3 -m http.server
 - Free-form page canvas: click anywhere to add a note container; drag its top bar to move it and its right edge to resize
 - Rich text: bold, italic, underline, strikethrough, headings, lists, to-do checkboxes, highlight, font color, links, tables
 - Images: toolbar button (several at once), paste, or drag-and-drop onto a note or the page. Large photos are scaled to 1600px
-- Search across all notebooks (Ctrl+E)
+- Search across all notebooks (⌘F)
 - Export/Import as JSON for backup or moving between machines
+
+## macOS look and feel
+
+- Full-height translucent sidebar (vibrancy) with the window controls on it; the rest of the window stays opaque
+- Native menu bar, right-click menus, warning sheets and open/save panels; notifications after import and export
+- Follows the system accent colour, light/dark mode, Reduce Motion, Increase Contrast and Reduce Transparency
+- Toolbar buttons show hover, pressed and active states; tooltips appear after a short delay and show the shortcut
+- VoiceOver labels and roles throughout; full keyboard navigation of sections, pages, menus and dialogs
+- Remembers window size, position, sidebar widths and text size; toolbar tools collapse into a More menu in narrow windows
+- Spelling suggestions and Look Up in notes
 
 ## Import file format
 
@@ -91,11 +101,27 @@ Import takes a JSON file (UTF-8) and **replaces all current data**, so export fi
 
 ## Shortcuts
 
-| Keys | Action |
-| --- | --- |
-| Ctrl/Cmd+N | New page (desktop app) |
-| Ctrl/Cmd+E | Search |
-| Ctrl/Cmd+1 | Toggle to-do checkbox on the current line |
-| Ctrl/Cmd+B / I / U | Bold / italic / underline |
-| Tab / Shift+Tab | Indent / outdent |
-| Ctrl/Cmd+click link | Open link |
+Mac shortcuts are shown; on Windows use Ctrl in place of ⌘. Every action is also in the menu bar, and toolbar tooltips show the shortcut.
+
+| Mac | Windows | Action |
+| --- | --- | --- |
+| ⌘N | Ctrl+N | New page |
+| ⌥⌘N | Ctrl+Alt+N | New subpage |
+| ⇧⌘N | Ctrl+Shift+N | New section |
+| ⌘O / ⇧⌘E | Ctrl+O / Ctrl+Shift+E | Import / export |
+| ⌘F | Ctrl+F | Search all notebooks |
+| ⌃⌘S | Ctrl+Shift+L | Show or hide the sidebar |
+| ⌘+ / ⌘- / ⌘0 | Ctrl++ / Ctrl+- / Ctrl+0 | Note text bigger / smaller / actual size |
+| ⌘B / ⌘I / ⌘U | Ctrl+B / I / U | Bold / italic / underline |
+| ⇧⌘X | Ctrl+Shift+X | Strikethrough |
+| ⌥⌘1 / ⌥⌘2 / ⌥⌘0 | Ctrl+Shift+1 / 2 / 0 | Title / heading / body |
+| ⇧⌘7 / ⇧⌘8 | Ctrl+Shift+7 / 8 | Bulleted / numbered list |
+| ⌘1 | Ctrl+1 | To-do checkbox |
+| ⇧⌘H | Ctrl+Shift+H | Highlight |
+| ⌘K | Ctrl+K | Add link |
+| ⇧⌘I | Ctrl+Shift+I | Insert image |
+| ↑ ↓ ← → | | Move through sections and pages; ← → collapse and expand subpages |
+| ↩ | Enter | Rename the selected section or page |
+| ⌘⌫ | Ctrl+Backspace | Delete the selected section or page |
+| ⌘[ / ⌘] | Ctrl+[ / ] | Move a page out one level / make it a subpage |
+| ⌃⌘F | F11 | Full screen |
