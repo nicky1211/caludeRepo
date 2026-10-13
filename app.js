@@ -27,6 +27,16 @@
     canvas: $('canvas'),
     emptyState: $('emptyState'),
     contextMenu: $('contextMenu'),
+    placeDialog: $('placeDialog'),
+    placeHeading: $('placeHeading'),
+    placeNameRow: $('placeNameRow'),
+    placeName: $('placeName'),
+    placeFilter: $('placeFilter'),
+    placeList: $('placeList'),
+    placeOk: $('placeOk'),
+    textDialog: $('textDialog'),
+    textHeading: $('textHeading'),
+    textValue: $('textValue'),
   };
 
   // ---------- State ----------
@@ -248,28 +258,42 @@
     el.pagesHeader.textContent = s ? s.name : 'Pages';
     el.addPageBtn.disabled = !s;
     if (!s) return;
-    for (const p of s.pages) {
+    let hideDeeperThan = Infinity; // set while inside a collapsed page's subtree
+    s.pages.forEach((p, i) => {
+      if (p.level > hideDeeperThan) return;
+      hideDeeperThan = p.collapsed ? p.level : Infinity;
       const li = document.createElement('li');
       li.dataset.id = p.id;
       li.draggable = true;
-      if (p.level) li.classList.add('subpage');
+      li.style.paddingLeft = (6 + Math.min(p.level, 8) * 16) + 'px';
       if (active && p.id === active.id) li.classList.add('active');
+      const twisty = document.createElement('span');
+      twisty.className = 'twisty';
+      if (hasChildren(s.pages, i)) {
+        twisty.classList.add('has-children');
+        twisty.textContent = p.collapsed ? '\u25B6' : '\u25BC';
+        twisty.title = p.collapsed ? 'Expand' : 'Collapse';
+      }
+      const label = document.createElement('span');
+      label.className = 'label';
       const title = document.createElement('span');
+      title.className = 'title';
       title.textContent = p.title || 'Untitled Page';
       const preview = document.createElement('span');
       preview.className = 'preview';
       preview.textContent = pageText(p).slice(0, 80) || formatDate(p.created);
-      li.append(title, preview);
+      label.append(title, preview);
+      li.append(twisty, label);
       el.pageList.appendChild(li);
-    }
+    });
   }
 
   function updateActivePageListItem() {
     const p = page();
     const li = p && el.pageList.querySelector(`li[data-id="${p.id}"]`);
     if (!li) return;
-    li.firstChild.textContent = p.title || 'Untitled Page';
-    li.lastChild.textContent = pageText(p).slice(0, 80) || formatDate(p.created);
+    li.querySelector('.title').textContent = p.title || 'Untitled Page';
+    li.querySelector('.preview').textContent = pageText(p).slice(0, 80) || formatDate(p.created);
   }
 
   function formatDate(iso) {
@@ -292,11 +316,25 @@
       return;
     }
     if (document.activeElement !== el.pageTitle || renderedPageId !== p.id) el.pageTitle.value = p.title;
-    el.pageMeta.textContent = formatDate(p.created);
+    renderPageMeta(p);
     if (renderedPageId === p.id) return; // keep DOM (and caret) intact while editing
     renderedPageId = p.id;
     el.canvas.innerHTML = '';
     for (const n of p.notes) el.canvas.appendChild(buildNote(n));
+  }
+
+  function renderPageMeta(p) {
+    const s = section();
+    const crumbs = [s.name];
+    const chain = [];
+    for (let i = parentIndex(s.pages, s.pages.indexOf(p)); i >= 0; i = parentIndex(s.pages, i)) {
+      chain.unshift(s.pages[i].title || 'Untitled Page');
+    }
+    el.pageMeta.innerHTML = '';
+    const c = document.createElement('span');
+    c.className = 'crumbs';
+    c.textContent = crumbs.concat(chain).join('  >  ');
+    el.pageMeta.append(c, formatDate(p.created));
   }
 
   function buildNote(n) {
@@ -328,8 +366,8 @@
 
   el.notebookSelect.addEventListener('change', () => navigateTo(el.notebookSelect.value));
 
-  el.addNotebookBtn.addEventListener('click', () => {
-    const name = prompt('Notebook name:', 'New Notebook');
+  el.addNotebookBtn.addEventListener('click', async () => {
+    const name = await askText('New notebook', 'New Notebook');
     if (!name || !name.trim()) return;
     const nb = newNotebook(name.trim());
     state.notebooks.push(nb);
@@ -339,8 +377,8 @@
   el.notebookMenuBtn.addEventListener('click', (e) => {
     const nb = notebook();
     showMenu(e.clientX, e.clientY + 10, [
-      { label: 'Rename notebook', action: () => {
-        const name = prompt('Rename notebook:', nb.name);
+      { label: 'Rename notebook', action: async () => {
+        const name = await askText('Rename notebook', nb.name);
         if (name && name.trim()) { nb.name = name.trim(); save(); render(); }
       } },
       { label: 'Delete notebook', danger: true, action: () => {
@@ -383,7 +421,7 @@
     const items = [
       { label: 'Rename', action: () => startRename(li, s, 'name') },
       { colors: SECTION_COLORS, action: (c) => { s.color = c; save(); renderSections(); } },
-      { label: 'New page in section', action: () => { addPage(s); } },
+      { label: 'New page in section...', action: () => newPageDialog(null, s.id) },
     ];
     const otherNotebooks = state.notebooks.filter((n) => n !== nb);
     for (const other of otherNotebooks) {
@@ -402,28 +440,102 @@
     showMenu(e.clientX, e.clientY, items);
   });
 
-  // ---------- Page actions ----------
+  // ---------- Page tree ----------
+  // Pages are a flat ordered list per section; `level` is the nesting depth.
+  // A page's subtree is the page itself plus the pages right after it with a deeper level.
 
-  function addPage(s = section(), afterIndex = null, level = 0) {
-    if (!s) return;
-    const p = newPage();
-    p.level = level;
-    if (afterIndex === null) s.pages.push(p);
-    else s.pages.splice(afterIndex + 1, 0, p);
-    navigateTo(notebook().id, s.id, p.id);
-    el.pageTitle.focus();
+  function subtreeSize(pages, idx) {
+    let n = 1;
+    while (pages[idx + n] && pages[idx + n].level > pages[idx].level) n++;
+    return n;
   }
 
-  el.addPageBtn.addEventListener('click', () => addPage());
+  const hasChildren = (pages, idx) => !!pages[idx + 1] && pages[idx + 1].level > pages[idx].level;
+
+  function parentIndex(pages, idx) {
+    for (let i = idx - 1; i >= 0; i--) if (pages[i].level < pages[idx].level) return i;
+    return -1;
+  }
+
+  function findSection(sectionId) {
+    for (const nb of state.notebooks) {
+      const s = nb.sections.find((x) => x.id === sectionId);
+      if (s) return { nb, s };
+    }
+    return null;
+  }
+
+  function insertSubtree(group, s, at, level) {
+    const delta = level - group[0].level;
+    group.forEach((p) => { p.level += delta; });
+    s.pages.splice(at, 0, ...group);
+    normalizeLevels(s);
+  }
+
+  // Puts a subtree as the last child of `parent`, or at the end of the section when parent is null.
+  function placeSubtree(group, s, parent) {
+    if (!parent) return insertSubtree(group, s, s.pages.length, 0);
+    const pi = s.pages.indexOf(parent);
+    parent.collapsed = false;
+    insertSubtree(group, s, pi + subtreeSize(s.pages, pi), parent.level + 1);
+  }
+
+  function takeSubtree(s, idx) {
+    const group = s.pages.splice(idx, subtreeSize(s.pages, idx));
+    if (group.some((p) => p.id === s.lastPageId)) {
+      const next = s.pages[idx] || s.pages[idx - 1];
+      s.lastPageId = next ? next.id : null;
+    }
+    return group;
+  }
+
+  function movePage(from, pageId, toSectionId, parentId) {
+    const target = findSection(toSectionId);
+    if (!target) return;
+    const idx = from.pages.findIndex((p) => p.id === pageId);
+    if (idx < 0) return;
+    const ids = from.pages.slice(idx, idx + subtreeSize(from.pages, idx)).map((p) => p.id);
+    if (parentId && ids.includes(parentId)) return; // can't move a page under itself
+    const group = takeSubtree(from, idx);
+    placeSubtree(group, target.s, parentId ? target.s.pages.find((p) => p.id === parentId) : null);
+    navigateTo(target.nb.id, target.s.id, pageId);
+  }
+
+  // ---------- Page actions ----------
+
+  async function newPageDialog(parentId = null, sectionId = section() && section().id) {
+    const choice = await choosePlacement({
+      heading: 'New page', okLabel: 'Create', askTitle: true,
+      sectionId, parentId,
+    });
+    if (!choice) return;
+    const target = findSection(choice.sectionId);
+    if (!target) return;
+    const p = newPage(choice.title);
+    placeSubtree([p], target.s, choice.parentId ? target.s.pages.find((x) => x.id === choice.parentId) : null);
+    navigateTo(target.nb.id, target.s.id, p.id);
+    if (p.title) createNote(40, 20);
+    else el.pageTitle.focus();
+  }
+
+  el.addPageBtn.addEventListener('click', () => newPageDialog());
 
   el.pageList.addEventListener('click', (e) => {
     const li = e.target.closest('li[data-id]');
-    if (li && !li.querySelector('input')) navigateTo(notebook().id, section().id, li.dataset.id);
+    if (!li || li.querySelector('input')) return;
+    const s = section();
+    if (e.target.closest('.twisty.has-children')) {
+      const p = s.pages.find((x) => x.id === li.dataset.id);
+      p.collapsed = !p.collapsed;
+      save(); renderPages();
+      return;
+    }
+    navigateTo(notebook().id, s.id, li.dataset.id);
   });
 
   el.pageList.addEventListener('dblclick', (e) => {
     const li = e.target.closest('li[data-id]');
-    if (!li) return;
+    if (!li || e.target.closest('.twisty')) return;
     el.pageTitle.focus();
     el.pageTitle.select();
   });
@@ -436,53 +548,168 @@
     const s = section();
     const idx = s.pages.findIndex((x) => x.id === li.dataset.id);
     const p = s.pages[idx];
+    const size = subtreeSize(s.pages, idx);
+    const pi = parentIndex(s.pages, idx);
     const items = [
       { label: 'Rename', action: () => { navigateTo(nb.id, s.id, p.id); el.pageTitle.focus(); el.pageTitle.select(); } },
-      { label: 'New page below', action: () => addPage(s, idx + pageGroupSize(s, idx) - 1, p.level) },
-      p.level
-        ? { label: 'Promote subpage', action: () => { p.level = 0; save(); renderPages(); } }
-        : { label: 'Make subpage', action: () => {
-            if (idx === 0) { alert('The first page cannot be a subpage.'); return; }
-            p.level = 1; save(); renderPages();
-          } },
-      { label: 'Duplicate', action: () => {
-        const copy = JSON.parse(JSON.stringify(p));
-        copy.id = uid();
-        copy.title = (p.title || 'Untitled Page') + ' (copy)';
-        copy.created = copy.updated = now();
-        copy.notes.forEach((n) => { n.id = uid(); });
-        s.pages.splice(idx + 1, 0, copy);
-        navigateTo(nb.id, s.id, copy.id);
+      { label: 'New subpage...', action: () => newPageDialog(p.id) },
+      { label: 'Move under...', action: async () => {
+        const choice = await choosePlacement({
+          heading: `Move "${p.title || 'Untitled Page'}"`, okLabel: 'Move', askTitle: false,
+          sectionId: s.id, parentId: pi >= 0 ? s.pages[pi].id : null,
+          exclude: new Set(s.pages.slice(idx, idx + size).map((x) => x.id)),
+        });
+        if (choice) movePage(s, p.id, choice.sectionId, choice.parentId);
       } },
     ];
-    for (const target of nb.sections.filter((x) => x !== s)) {
-      items.push({ label: `Move to: ${target.name}`, action: () => movePageToSection(s, idx, target) });
+    if (idx > 0 && s.pages[idx - 1].level >= p.level) {
+      items.push({ label: 'Make subpage of page above', action: () => {
+        s.pages.slice(idx, idx + size).forEach((x) => { x.level++; });
+        let above = idx - 1;
+        while (s.pages[above].level > p.level - 1) above--;
+        s.pages[above].collapsed = false;
+        save(); render();
+      } });
     }
+    if (p.level > 0) {
+      items.push({ label: 'Move out one level', action: () => {
+        // Becomes the next sibling of its current parent.
+        const group = s.pages.splice(idx, size);
+        insertSubtree(group, s, pi + subtreeSize(s.pages, pi), p.level - 1);
+        save(); render();
+      } });
+    }
+    if (size > 1) {
+      items.push({ label: p.collapsed ? 'Expand subpages' : 'Collapse subpages', action: () => {
+        p.collapsed = !p.collapsed; save(); renderPages();
+      } });
+    }
+    items.push({ label: 'Duplicate', action: () => {
+      const copy = JSON.parse(JSON.stringify(p));
+      copy.id = uid();
+      copy.title = (p.title || 'Untitled Page') + ' (copy)';
+      copy.created = copy.updated = now();
+      copy.collapsed = false;
+      copy.notes.forEach((n) => { n.id = uid(); });
+      s.pages.splice(idx + size, 0, copy);
+      navigateTo(nb.id, s.id, copy.id);
+    } });
     items.push({ label: 'Delete page', danger: true, action: () => {
-      if (!confirm(`Delete page "${p.title || 'Untitled Page'}"?`)) return;
-      s.pages.splice(idx, 1);
-      if (s.pages[idx] && s.pages[idx].level && (idx === 0 || !s.pages[idx - 1])) s.pages[idx].level = 0;
-      if (s.lastPageId === p.id) s.lastPageId = (s.pages[idx] || s.pages[idx - 1] || {}).id || null;
+      const extra = size > 1 ? ` and its ${size - 1} subpage${size > 2 ? 's' : ''}` : '';
+      if (!confirm(`Delete page "${p.title || 'Untitled Page'}"${extra}?`)) return;
+      takeSubtree(s, idx);
       if (renderedPageId === p.id) renderedPageId = null;
       save(); render();
     } });
     showMenu(e.clientX, e.clientY, items);
   });
 
-  // A top-level page "owns" the subpages directly below it.
-  function pageGroupSize(s, idx) {
-    if (s.pages[idx].level) return 1;
-    let n = 1;
-    while (s.pages[idx + n] && s.pages[idx + n].level) n++;
-    return n;
+  // ---------- Placement picker ----------
+
+  // Shows every section and page; resolves to { title, sectionId, parentId } (parentId null = top level) or null.
+  function choosePlacement({ heading, okLabel, askTitle, sectionId, parentId = null, exclude = new Set() }) {
+    const d = el.placeDialog;
+    el.placeHeading.textContent = heading;
+    el.placeOk.textContent = okLabel;
+    el.placeNameRow.classList.toggle('hidden', !askTitle);
+    el.placeName.value = '';
+    el.placeFilter.value = '';
+    let selected = { sectionId: sectionId || (state.notebooks[0].sections[0] || {}).id, parentId };
+
+    function option(text, value, indent, extraClass) {
+      const li = document.createElement('li');
+      li.setAttribute('role', 'option');
+      li.dataset.section = value.sectionId;
+      li.dataset.parent = value.parentId || '';
+      li.style.paddingLeft = (10 + indent * 16) + 'px';
+      li.textContent = text;
+      if (extraClass) li.classList.add(extraClass);
+      if (value.sectionId === selected.sectionId && (value.parentId || null) === (selected.parentId || null)) {
+        li.classList.add('selected');
+      }
+      return li;
+    }
+
+    function build() {
+      const q = el.placeFilter.value.trim().toLowerCase();
+      el.placeList.innerHTML = '';
+      for (const nb of state.notebooks) {
+        const rows = [];
+        for (const s of nb.sections) {
+          const sectionRow = option(`${s.name}  (top level, no parent)`, { sectionId: s.id, parentId: null }, 0, 'none');
+          const dot = document.createElement('span');
+          dot.className = 'swatch-dot';
+          dot.style.background = s.color;
+          sectionRow.prepend(dot);
+          const pageRows = s.pages
+            .filter((p) => !exclude.has(p.id))
+            .filter((p) => !q || (p.title || 'Untitled Page').toLowerCase().includes(q))
+            .map((p) => option(p.title || 'Untitled Page', { sectionId: s.id, parentId: p.id }, 1 + (q ? 0 : p.level)));
+          if (q && !pageRows.length && !s.name.toLowerCase().includes(q)) continue;
+          rows.push(sectionRow, ...pageRows);
+        }
+        if (!rows.length) continue;
+        const group = document.createElement('li');
+        group.className = 'group';
+        group.textContent = nb.name;
+        el.placeList.append(group, ...rows);
+      }
+      const sel = el.placeList.querySelector('.selected');
+      if (sel) sel.scrollIntoView({ block: 'nearest' });
+    }
+
+    return new Promise((resolve) => {
+      const pick = (e) => {
+        const li = e.target.closest('li[data-section]');
+        if (!li) return;
+        selected = { sectionId: li.dataset.section, parentId: li.dataset.parent || null };
+        el.placeList.querySelectorAll('.selected').forEach((x) => x.classList.remove('selected'));
+        li.classList.add('selected');
+        if (e.type === 'dblclick') d.close('ok');
+      };
+      const onKey = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); d.close('ok'); }
+      };
+      const onClose = () => {
+        el.placeList.removeEventListener('click', pick);
+        el.placeList.removeEventListener('dblclick', pick);
+        el.placeFilter.removeEventListener('input', build);
+        d.removeEventListener('keydown', onKey);
+        resolve(d.returnValue === 'ok' && selected.sectionId
+          ? { title: el.placeName.value.trim(), sectionId: selected.sectionId, parentId: selected.parentId }
+          : null);
+      };
+      el.placeList.addEventListener('click', pick);
+      el.placeList.addEventListener('dblclick', pick);
+      el.placeFilter.addEventListener('input', build);
+      d.addEventListener('keydown', onKey);
+      d.addEventListener('close', onClose, { once: true });
+      d.returnValue = '';
+      build();
+      d.showModal();
+      (askTitle ? el.placeName : el.placeFilter).focus();
+    });
   }
 
-  function movePageToSection(from, idx, to) {
-    const group = from.pages.splice(idx, pageGroupSize(from, idx));
-    group[0].level = 0;
-    to.pages.push(...group);
-    if (from.lastPageId === group[0].id) from.lastPageId = from.pages[0] ? from.pages[0].id : null;
-    save(); render();
+  // Replacement for window.prompt(), which desktop (Electron) builds don't support.
+  function askText(heading, value = '') {
+    const d = el.textDialog;
+    el.textHeading.textContent = heading;
+    el.textValue.value = value;
+    return new Promise((resolve) => {
+      const onKey = (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); d.close('ok'); }
+      };
+      d.addEventListener('keydown', onKey);
+      d.addEventListener('close', () => {
+        d.removeEventListener('keydown', onKey);
+        resolve(d.returnValue === 'ok' ? el.textValue.value : null);
+      }, { once: true });
+      d.returnValue = '';
+      d.showModal();
+      el.textValue.focus();
+      el.textValue.select();
+    });
   }
 
   el.pageTitle.addEventListener('input', () => {
@@ -738,21 +965,23 @@
       const body = activeBody();
       if (!body) return;
       const range = savedRange;
-      const url = prompt('Link URL:', 'https://');
-      if (!url || /^\s*javascript:/i.test(url)) return;
-      savedRange = range;
-      restoreSelection();
-      if (window.getSelection().isCollapsed) insertHtml(`<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`);
-      else exec('createLink', url);
+      askText('Link URL', 'https://').then((url) => {
+        if (!url || /^\s*javascript:/i.test(url)) return;
+        savedRange = range;
+        restoreSelection();
+        if (window.getSelection().isCollapsed) insertHtml(`<a href="${escapeHtml(url)}">${escapeHtml(url)}</a>`);
+        else exec('createLink', url);
+      });
     } else if (btn.dataset.action === 'table') {
       const range = savedRange;
-      const spec = prompt('Table size (rows x columns):', '3x3');
-      const m = spec && spec.match(/^\s*(\d+)\s*[x*,]\s*(\d+)\s*$/i);
-      if (!m) return;
-      const rows = Math.min(+m[1], 50), cols = Math.min(+m[2], 20);
-      const row = '<tr>' + '<td><br></td>'.repeat(cols) + '</tr>';
-      savedRange = range;
-      insertHtml('<table><tbody>' + row.repeat(rows) + '</tbody></table><p><br></p>');
+      askText('Table size (rows x columns)', '3x3').then((spec) => {
+        const m = spec && spec.match(/^\s*(\d+)\s*[x*,]\s*(\d+)\s*$/i);
+        if (!m) return;
+        const rows = Math.min(+m[1], 50), cols = Math.min(+m[2], 20);
+        const row = '<tr>' + '<td><br></td>'.repeat(cols) + '</tr>';
+        savedRange = range;
+        insertHtml('<table><tbody>' + row.repeat(rows) + '</tbody></table><p><br></p>');
+      });
     }
   });
 
@@ -923,39 +1152,48 @@
       nb.sections.splice(to, 0, moved);
       save(); renderSections();
     } else if (li && li.dataset.id !== section().id) {
-      const s = section();
-      const idx = s.pages.findIndex((p) => p.id === drag.id);
-      const target = nb.sections.find((x) => x.id === li.dataset.id);
-      if (idx >= 0 && target) movePageToSection(s, idx, target);
+      movePage(section(), drag.id, li.dataset.id, null);
     }
     drag = null;
     clearDropMarks();
   });
 
+  // Dropping on the top part of a page puts the dragged page before it; lower down makes it a subpage.
+  function pageDropTarget(e) {
+    const s = section();
+    const from = s.pages.findIndex((p) => p.id === drag.id);
+    if (from < 0) return null;
+    const li = e.target.closest('li[data-id]');
+    if (!li) return { li: null, mode: 'end', from };
+    const ti = s.pages.findIndex((p) => p.id === li.dataset.id);
+    if (ti >= from && ti < from + subtreeSize(s.pages, from)) return null; // onto itself or its own subpages
+    const rect = li.getBoundingClientRect();
+    return { li, mode: e.clientY < rect.top + rect.height * 0.35 ? 'before' : 'into', from };
+  }
+
   el.pageList.addEventListener('dragover', (e) => {
     if (!drag || drag.type !== 'page') return;
-    e.preventDefault();
     clearDropMarks();
-    const li = e.target.closest('li[data-id]');
-    if (li) li.classList.add('drop-before');
+    const t = pageDropTarget(e);
+    if (!t) return;
+    e.preventDefault();
+    if (t.li) t.li.classList.add(t.mode === 'before' ? 'drop-before' : 'drop-into');
   });
 
   el.pageList.addEventListener('drop', (e) => {
     if (!drag || drag.type !== 'page') return;
-    e.preventDefault();
-    const s = section();
-    const li = e.target.closest('li[data-id]');
-    const from = s.pages.findIndex((p) => p.id === drag.id);
-    if (from >= 0 && (!li || li.dataset.id !== drag.id)) {
-      const group = s.pages.splice(from, pageGroupSize(s, from));
-      let to = li ? s.pages.findIndex((p) => p.id === li.dataset.id) : s.pages.length;
-      if (to < 0) to = s.pages.length; // dropped onto one of its own subpages
-      s.pages.splice(to, 0, ...group);
-      if (s.pages[0] && s.pages[0].level) s.pages[0].level = 0;
-      save(); renderPages();
-    }
+    const t = pageDropTarget(e);
     drag = null;
     clearDropMarks();
+    if (!t) return;
+    e.preventDefault();
+    const s = section();
+    const target = t.li && s.pages.find((p) => p.id === t.li.dataset.id);
+    const group = s.pages.splice(t.from, subtreeSize(s.pages, t.from));
+    if (t.mode === 'end') insertSubtree(group, s, s.pages.length, 0);
+    else if (t.mode === 'into') placeSubtree(group, s, target);
+    else insertSubtree(group, s, s.pages.indexOf(target), target.level);
+    save(); render();
   });
 
   // ---------- Search ----------
@@ -1092,6 +1330,9 @@
       e.preventDefault();
       el.searchInput.focus();
       el.searchInput.select();
+    } else if (mod && e.key.toLowerCase() === 'n' && desktop) {
+      e.preventDefault();
+      newPageDialog();
     } else if (mod && e.key === '1' && document.activeElement.closest('.note .body')) {
       e.preventDefault();
       toggleTodo();

@@ -3,6 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https: http:">
   <title>Notebook</title>
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -72,6 +73,34 @@
   </main>
 
   <ul id="contextMenu" class="context-menu hidden"></ul>
+
+  <dialog id="placeDialog" class="dialog">
+    <form method="dialog">
+      <h3 id="placeHeading">New page</h3>
+      <label id="placeNameRow">Title
+        <input id="placeName" placeholder="Untitled Page" autocomplete="off">
+      </label>
+      <label>Place under
+        <input id="placeFilter" type="search" placeholder="Filter pages..." autocomplete="off">
+      </label>
+      <ul id="placeList" class="place-list" role="listbox"></ul>
+      <div class="dialog-actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button id="placeOk" value="ok" class="primary">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="textDialog" class="dialog">
+    <form method="dialog">
+      <h3 id="textHeading"></h3>
+      <input id="textValue" autocomplete="off">
+      <div class="dialog-actions">
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary">OK</button>
+      </div>
+    </form>
+  </dialog>
 
   <script src="app.js"></script>
 </body>

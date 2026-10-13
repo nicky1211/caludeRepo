@@ -1,0 +1,67 @@
+{
+  "name": "notebook",
+  "productName": "Notebook",
+  "version": "1.1.0",
+  "description": "A OneNote-style note-taking app",
+  "author": "nicky1211",
+  "license": "ISC",
+  "main": "electron/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nicky1211/caludeRepo.git"
+  },
+  "devDependencies": {
+    "electron": "^44.7.0",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "com.nicky1211.notebook",
+    "productName": "Notebook",
+    "files": [
+      "index.html",
+      "styles.css",
+      "app.js",
+      "electron/**"
+    ],
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "category": "public.app-category.productivity",
+      "identity": "-"
+    },
+    "dmg": {
+      "artifactName": "Notebook-${version}-${arch}.dmg"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "Notebook-Setup-${version}.exe"
+    }
+  }
+}

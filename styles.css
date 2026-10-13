@@ -150,7 +150,7 @@ button:hover, .file-btn:hover, .color-btn:hover { background: var(--hover); }
 .list li.dragging { opacity: .4; }
 
 #sectionList li { border-left-width: 6px; }
-#pageList li.subpage { padding-left: 28px; }
+
 #pageList li .preview {
   display: block;
   font-size: .78rem;
@@ -289,3 +289,71 @@ button:hover, .file-btn:hover, .color-btn:hover { background: var(--hover); }
   .brand, .topbar-actions { display: none; }
   .page-head { padding: 16px; }
 }
+
+/* Page tree */
+#pageList li { display: flex; align-items: flex-start; gap: 2px; }
+#pageList li .twisty {
+  flex: 0 0 16px;
+  text-align: center;
+  color: var(--muted);
+  font-size: .7rem;
+  line-height: 1.6rem;
+  border-radius: 3px;
+}
+#pageList li .twisty.has-children { cursor: pointer; }
+#pageList li .twisty.has-children:hover { background: var(--hover); color: var(--text); }
+#pageList li .label { min-width: 0; flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.page-meta .crumbs { display: block; margin-bottom: 2px; }
+
+/* Dialogs */
+.dialog {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px 20px;
+  width: min(480px, calc(100vw - 32px));
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 12px 40px rgba(0,0,0,.25);
+}
+.dialog::backdrop { background: rgba(0,0,0,.3); }
+.dialog h3 { margin: 0 0 12px; font-size: 1.1rem; }
+.dialog label { display: block; font-size: .85rem; color: var(--muted); margin-bottom: 10px; }
+.dialog input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 1rem;
+}
+.dialog > form > input { margin-bottom: 4px; }
+.place-list {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 4px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+}
+.place-list li { padding: 5px 10px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.place-list li:hover { background: var(--hover); }
+.place-list li.selected { background: var(--accent-soft); font-weight: 600; }
+.place-list li.group {
+  cursor: default;
+  font-size: .75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 8px;
+}
+.place-list li.group:hover { background: transparent; }
+.place-list li.none { font-style: italic; }
+.place-list .swatch-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.dialog-actions button { border: 1px solid var(--border); padding: 6px 14px; }
+.dialog-actions .primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+.dialog-actions .primary:hover { filter: brightness(1.1); background: var(--accent); }
