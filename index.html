@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Notebook</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Notebook</div>
+    <div class="notebook-picker">
+      <select id="notebookSelect" title="Switch notebook"></select>
+      <button id="addNotebookBtn" class="icon-btn" title="New notebook">+</button>
+      <button id="notebookMenuBtn" class="icon-btn" title="Notebook options">...</button>
+    </div>
+    <input id="searchInput" type="search" placeholder="Search all notebooks (Ctrl+E)">
+    <div class="topbar-actions">
+      <button id="exportBtn" title="Export all data as JSON">Export</button>
+      <label class="file-btn" title="Import data from JSON">Import<input id="importInput" type="file" accept="application/json" hidden></label>
+    </div>
+  </header>
+
+  <div class="toolbar" id="toolbar">
+    <button data-cmd="bold" title="Bold (Ctrl+B)"><b>B</b></button>
+    <button data-cmd="italic" title="Italic (Ctrl+I)"><i>I</i></button>
+    <button data-cmd="underline" title="Underline (Ctrl+U)"><u>U</u></button>
+    <button data-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+    <span class="sep"></span>
+    <button data-block="H1" title="Heading 1">H1</button>
+    <button data-block="H2" title="Heading 2">H2</button>
+    <button data-block="P" title="Normal text">P</button>
+    <span class="sep"></span>
+    <button data-cmd="insertUnorderedList" title="Bullet list">&bull; List</button>
+    <button data-cmd="insertOrderedList" title="Numbered list">1. List</button>
+    <button data-action="todo" title="To-do checkbox (Ctrl+1)">&#9744; To Do</button>
+    <span class="sep"></span>
+    <button data-action="highlight" title="Highlight"><span class="hl-swatch">ab</span></button>
+    <label class="color-btn" title="Font color">A<input type="color" id="fontColor" value="#c0392b"></label>
+    <button data-action="link" title="Insert link">Link</button>
+    <button data-action="table" title="Insert table">Table</button>
+    <label class="file-btn" title="Insert image">Image<input id="imageInput" type="file" accept="image/*" hidden></label>
+    <button data-cmd="removeFormat" title="Clear formatting">Clear</button>
+  </div>
+
+  <main class="layout">
+    <nav class="sections-pane">
+      <div class="pane-header">
+        <span>Sections</span>
+        <button id="addSectionBtn" class="icon-btn" title="New section">+</button>
+      </div>
+      <ul id="sectionList" class="list"></ul>
+    </nav>
+
+    <nav class="pages-pane">
+      <div class="pane-header">
+        <span id="pagesHeader">Pages</span>
+        <button id="addPageBtn" class="icon-btn" title="New page">+</button>
+      </div>
+      <ul id="pageList" class="list"></ul>
+      <ul id="searchResults" class="list hidden"></ul>
+    </nav>
+
+    <section class="page-pane" id="pagePane">
+      <div class="page-head">
+        <input id="pageTitle" class="page-title" placeholder="Untitled Page">
+        <div id="pageMeta" class="page-meta"></div>
+      </div>
+      <div id="canvas" class="canvas" title="Click anywhere to add a note"></div>
+      <div id="emptyState" class="empty-state hidden">Create a section and a page to start taking notes.</div>
+    </section>
+  </main>
+
+  <ul id="contextMenu" class="context-menu hidden"></ul>
+
+  <script src="app.js"></script>
+</body>
+</html>
