@@ -739,7 +739,7 @@
     const size = subtreeSize(s.pages, idx);
     const pi = parentIndex(s.pages, idx);
     const items = [
-      { label: 'New Subpage…', keys: 'alt+cmd+n', action: () => newPageDialog(p.id) },
+      { label: 'New Subpage…', keys: KEYS.newSubpage, action: () => newPageDialog(p.id) },
       { label: 'Rename', keys: 'enter', action: () => { navigateTo(nb.id, s.id, p.id); el.pageTitle.focus(); el.pageTitle.select(); } },
       { separator: true },
       { label: 'Move Under…', action: async () => {
@@ -1296,7 +1296,7 @@
   // ---------- Commands (toolbar, menus and keyboard all go through here) ----------
 
   const KEYS = {
-    newPage: 'cmd+n', newSubpage: 'alt+cmd+n', newSection: 'shift+cmd+n',
+    newPage: 'cmd+n', newSubpage: isMac ? 'alt+cmd+n' : null, // Ctrl+Alt is AltGr on Windows newSection: 'shift+cmd+n',
     import: 'cmd+o', export: 'shift+cmd+e', find: 'cmd+f',
     toggleSidebar: isMac ? 'ctrl+cmd+s' : 'shift+cmd+l',
     textBigger: 'cmd+=', textSmaller: 'cmd+-', textActual: 'cmd+0',

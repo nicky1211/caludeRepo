@@ -106,7 +106,7 @@ Mac shortcuts are shown; on Windows use Ctrl in place of ⌘. Every action is al
 | Mac | Windows | Action |
 | --- | --- | --- |
 | ⌘N | Ctrl+N | New page |
-| ⌥⌘N | Ctrl+Alt+N | New subpage |
+| ⌥⌘N | | New subpage |
 | ⇧⌘N | Ctrl+Shift+N | New section |
 | ⌘O / ⇧⌘E | Ctrl+O / Ctrl+Shift+E | Import / export |
 | ⌘F | Ctrl+F | Search all notebooks |

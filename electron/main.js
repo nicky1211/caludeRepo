@@ -293,7 +293,7 @@ function buildMenu() {
       label: 'File',
       submenu: [
         { label: 'New Page', accelerator: 'CmdOrCtrl+N', click: cmd('newPage') },
-        { label: 'New Subpage', accelerator: 'Alt+CmdOrCtrl+N', click: cmd('newSubpage') },
+        { label: 'New Subpage', accelerator: ifMac('Alt+Cmd+N', undefined), click: cmd('newSubpage') }, // Ctrl+Alt is AltGr on Windows
         { label: 'New Section', accelerator: 'Shift+CmdOrCtrl+N', click: cmd('newSection') },
         { label: 'New Notebook…', click: cmd('newNotebook') },
         { type: 'separator' },
